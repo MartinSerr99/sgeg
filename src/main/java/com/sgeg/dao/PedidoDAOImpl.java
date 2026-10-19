@@ -2,6 +2,7 @@ package com.sgeg.dao;
 
 import com.sgeg.excepcion.NegocioException;
 import com.sgeg.excepcion.StockInsuficienteException;
+import com.sgeg.modelo.Cliente;
 import com.sgeg.modelo.DetallePedido;
 import com.sgeg.modelo.EstadoMesa;
 import com.sgeg.modelo.EstadoPedido;
@@ -46,7 +47,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
     private static final String SQL_BLOQUEAR_INSUMO =
             "SELECT nombre, unidad_medida, stock_actual FROM insumo WHERE id_insumo = ? FOR UPDATE";
 
-    private static final String SQL_DESCONTAR_INSUMO =
+    private static final String SQL_AJUSTAR_INSUMO =
             "UPDATE insumo SET stock_actual = stock_actual - ? WHERE id_insumo = ?";
 
     // Solo ocupa la mesa si TODAVÍA está libre: si otro mozo se la ganó, no actualiza ninguna fila.
@@ -57,12 +58,14 @@ public class PedidoDAOImpl implements IPedidoDAO {
 
     private static final String SQL_LISTAR_PEDIDOS =
             "SELECT p.id_pedido, p.id_mesa, m.numero AS numero_mesa, ep.descripcion AS estado, "
-            + "       u.nombre AS mozo, DATE_FORMAT(p.fecha_hora, '%H:%i') AS hora, "
+            + "       u.nombre AS mozo, p.id_cliente, c.nombre AS cliente, "
+            + "       DATE_FORMAT(p.fecha_hora, '%H:%i') AS hora, "
             + "       TIMESTAMPDIFF(MINUTE, p.fecha_hora, NOW()) AS minutos "
             + "FROM pedido p "
             + "JOIN estado_pedido ep ON ep.id_estado_pedido = p.id_estado_pedido "
             + "JOIN usuario u ON u.id_usuario = p.id_usuario "
-            + "LEFT JOIN mesa m ON m.id_mesa = p.id_mesa ";
+            + "LEFT JOIN mesa m ON m.id_mesa = p.id_mesa "
+            + "LEFT JOIN cliente c ON c.id_cliente = p.id_cliente ";
 
     private static final String SQL_LISTAR_DETALLES =
             "SELECT dp.id_detalle, dp.id_pedido, dp.id_producto, pr.nombre, dp.cantidad, dp.precio_unitario "
@@ -73,6 +76,34 @@ public class PedidoDAOImpl implements IPedidoDAO {
             "UPDATE pedido SET id_estado_pedido = (SELECT id_estado_pedido FROM estado_pedido WHERE descripcion = ?) "
             + "WHERE id_pedido = ? "
             + "AND id_estado_pedido = (SELECT id_estado_pedido FROM estado_pedido WHERE descripcion = ?)";
+
+    // ---- CU07: modificar y cancelar
+
+    private static final String SQL_MESA_DEL_PEDIDO =
+            "SELECT id_mesa FROM pedido WHERE id_pedido = ?";
+
+    private static final String SQL_LIBERAR_MESA =
+            "UPDATE mesa SET id_estado_mesa = (SELECT id_estado_mesa FROM estado_mesa WHERE descripcion = ?) "
+            + "WHERE id_mesa = ? "
+            + "AND id_estado_mesa = (SELECT id_estado_mesa FROM estado_mesa WHERE descripcion = ?)";
+
+    // "FOR UPDATE OF p" bloquea solo la fila del pedido (no la del catálogo estado_pedido, que comparten todos los pedidos). Requiere MySQL 8.
+    private static final String SQL_BLOQUEAR_PEDIDO =
+            "SELECT ep.descripcion AS estado FROM pedido p "
+            + "JOIN estado_pedido ep ON ep.id_estado_pedido = p.id_estado_pedido "
+            + "WHERE p.id_pedido = ? FOR UPDATE OF p";
+
+    private static final String SQL_CANTIDADES_DEL_PEDIDO =
+            "SELECT id_producto, SUM(cantidad) AS cantidad FROM detalle_pedido WHERE id_pedido = ? GROUP BY id_producto";
+
+    private static final String SQL_BORRAR_DETALLES =
+            "DELETE FROM detalle_pedido WHERE id_pedido = ?";
+
+    private static final String SQL_ACTUALIZAR_PEDIDO =
+            "UPDATE pedido SET total = ?, id_cliente = ? WHERE id_pedido = ?";
+
+    private static final String SQL_BORRAR_PEDIDO =
+            "DELETE FROM pedido WHERE id_pedido = ?";
 
     // ------------------------------------------------------------------ registrar (CU06)
 
@@ -91,7 +122,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
             }
             insertarPedido(conexion, pedido);
             insertarDetalles(conexion, pedido);
-            descontarStock(conexion, pedido);
+            ajustarStock(conexion, necesidadDeInsumos(conexion, cantidadesDe(pedido)));
 
             conexion.commit();
         } catch (NegocioException e) {
@@ -160,49 +191,69 @@ public class PedidoDAOImpl implements IPedidoDAO {
         }
     }
 
+    // ------------------------------------------------------------------ stock (compartido por CU06 y CU07)
+
+    private static Map<Integer, Integer> cantidadesDe(Pedido pedido) {
+        Map<Integer, Integer> cantidades = new HashMap<>();
+        for (DetallePedido detalle : pedido.getDetalles()) {
+            cantidades.merge(detalle.getProducto().getIdProducto(), detalle.getCantidad(), Integer::sum);
+        }
+        return cantidades;
+    }
+
     /**
-     * RF23: descuenta de una sola vez los insumos de TODO el pedido. Primero junta cuánto
-     * se necesita de cada insumo (varios productos pueden compartir uno), después bloquea
-     * cada fila de insumo, verifica que alcance y recién entonces descuenta.
+     * Cuánto de cada insumo consumen esas cantidades de productos (varios productos pueden
+     * compartir un insumo, por eso se suma). El TreeMap deja los insumos ordenados por id.
      */
-    private void descontarStock(Connection conexion, Pedido pedido) throws SQLException {
-        Map<Integer, BigDecimal> requerido = new TreeMap<>();
+    private TreeMap<Integer, BigDecimal> necesidadDeInsumos(Connection conexion, Map<Integer, Integer> cantidadesPorProducto)
+            throws SQLException {
+        TreeMap<Integer, BigDecimal> necesidad = new TreeMap<>();
         try (PreparedStatement receta = conexion.prepareStatement(SQL_RECETA_DEL_PRODUCTO)) {
-            for (DetallePedido detalle : pedido.getDetalles()) {
-                receta.setInt(1, detalle.getProducto().getIdProducto());
+            for (Map.Entry<Integer, Integer> linea : cantidadesPorProducto.entrySet()) {
+                receta.setInt(1, linea.getKey());
                 try (ResultSet filas = receta.executeQuery()) {
                     while (filas.next()) {
                         BigDecimal necesario = filas.getBigDecimal("cantidad_necesaria")
-                                .multiply(BigDecimal.valueOf(detalle.getCantidad()));
-                        requerido.merge(filas.getInt("id_insumo"), necesario, BigDecimal::add);
+                                .multiply(BigDecimal.valueOf(linea.getValue()));
+                        necesidad.merge(filas.getInt("id_insumo"), necesario, BigDecimal::add);
                     }
                 }
             }
         }
+        return necesidad;
+    }
 
+    /**
+     * Aplica un cambio de stock: un valor POSITIVO descuenta (hay que verificar que alcance) y un
+     * valor NEGATIVO devuelve stock. Bloquea cada fila de insumo en orden ascendente de id antes de tocarla.
+     */
+    private void ajustarStock(Connection conexion, TreeMap<Integer, BigDecimal> cambios) throws SQLException {
         try (PreparedStatement bloquear = conexion.prepareStatement(SQL_BLOQUEAR_INSUMO);
-             PreparedStatement descontar = conexion.prepareStatement(SQL_DESCONTAR_INSUMO)) {
-            for (Map.Entry<Integer, BigDecimal> insumo : requerido.entrySet()) {
-                bloquear.setInt(1, insumo.getKey());
+             PreparedStatement ajustar = conexion.prepareStatement(SQL_AJUSTAR_INSUMO)) {
+            for (Map.Entry<Integer, BigDecimal> cambio : cambios.entrySet()) {
+                if (cambio.getValue().signum() == 0) {
+                    continue;
+                }
+                bloquear.setInt(1, cambio.getKey());
                 try (ResultSet fila = bloquear.executeQuery()) {
                     if (!fila.next()) {
                         throw new NegocioException("Un insumo de la receta ya no existe en el sistema. "
                                 + "Avisá al administrador.");
                     }
                     BigDecimal disponible = fila.getBigDecimal("stock_actual");
-                    if (disponible.compareTo(insumo.getValue()) < 0) {
+                    if (cambio.getValue().signum() > 0 && disponible.compareTo(cambio.getValue()) < 0) {
                         throw new StockInsuficienteException(fila.getString("nombre"),
-                                fila.getString("unidad_medida"), insumo.getValue(), disponible);
+                                fila.getString("unidad_medida"), cambio.getValue(), disponible);
                     }
                 }
-                descontar.setBigDecimal(1, insumo.getValue());
-                descontar.setInt(2, insumo.getKey());
-                descontar.executeUpdate();
+                ajustar.setBigDecimal(1, cambio.getValue());
+                ajustar.setInt(2, cambio.getKey());
+                ajustar.executeUpdate();
             }
         }
     }
 
-    // ------------------------------------------------------------------ listar (CU08, RF18)
+    // ------------------------------------------------------------------ listar y leer (CU08, CU07, RF18)
 
     @Override
     public List<Pedido> listarPorEstados(EstadoPedido... estados) {
@@ -221,6 +272,30 @@ public class PedidoDAOImpl implements IPedidoDAO {
         }
     }
 
+    @Override
+    public Pedido buscarPorId(int idPedido) {
+        try {
+            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Map<Integer, Pedido> pedidos = new LinkedHashMap<>();
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR_PEDIDOS + "WHERE p.id_pedido = ?")) {
+                consulta.setInt(1, idPedido);
+                try (ResultSet fila = consulta.executeQuery()) {
+                    while (fila.next()) {
+                        Pedido pedido = mapearPedido(fila);
+                        pedidos.put(pedido.getIdPedido(), pedido);
+                    }
+                }
+            }
+            if (pedidos.isEmpty()) {
+                return null;
+            }
+            leerDetalles(conexion, pedidos);
+            return pedidos.get(idPedido);
+        } catch (SQLException e) {
+            throw new DAOException("No se pudo leer el pedido #" + idPedido, e);
+        }
+    }
+
     private Map<Integer, Pedido> leerPedidos(Connection conexion, EstadoPedido[] estados) throws SQLException {
         String sql = SQL_LISTAR_PEDIDOS
                 + "WHERE ep.descripcion IN (" + marcadores(estados.length) + ") "
@@ -232,23 +307,32 @@ public class PedidoDAOImpl implements IPedidoDAO {
             }
             try (ResultSet fila = consulta.executeQuery()) {
                 while (fila.next()) {
-                    Pedido pedido = new Pedido();
-                    pedido.setIdPedido(fila.getInt("id_pedido"));
-                    int idMesa = fila.getInt("id_mesa");
-                    if (!fila.wasNull()) {
-                        pedido.setMesa(new Mesa(idMesa, fila.getInt("numero_mesa"), null));
-                    }
-                    pedido.setEstado(EstadoPedido.desdeDescripcion(fila.getString("estado")));
-                    Usuario mozo = new Usuario();
-                    mozo.setNombre(fila.getString("mozo"));
-                    pedido.setUsuario(mozo);
-                    pedido.setHoraCreacion(fila.getString("hora"));
-                    pedido.setMinutosEspera(Math.max(fila.getLong("minutos"), 0L));
+                    Pedido pedido = mapearPedido(fila);
                     pedidos.put(pedido.getIdPedido(), pedido);
                 }
             }
         }
         return pedidos;
+    }
+
+    private Pedido mapearPedido(ResultSet fila) throws SQLException {
+        Pedido pedido = new Pedido();
+        pedido.setIdPedido(fila.getInt("id_pedido"));
+        int idMesa = fila.getInt("id_mesa");
+        if (!fila.wasNull()) {
+            pedido.setMesa(new Mesa(idMesa, fila.getInt("numero_mesa"), null));
+        }
+        int idCliente = fila.getInt("id_cliente");
+        if (!fila.wasNull()) {
+            pedido.setCliente(new Cliente(idCliente, fila.getString("cliente"), null));
+        }
+        pedido.setEstado(EstadoPedido.desdeDescripcion(fila.getString("estado")));
+        Usuario mozo = new Usuario();
+        mozo.setNombre(fila.getString("mozo"));
+        pedido.setUsuario(mozo);
+        pedido.setHoraCreacion(fila.getString("hora"));
+        pedido.setMinutosEspera(Math.max(fila.getLong("minutos"), 0L));
+        return pedido;
     }
 
     private void leerDetalles(Connection conexion, Map<Integer, Pedido> pedidos) throws SQLException {
@@ -292,6 +376,159 @@ public class PedidoDAOImpl implements IPedidoDAO {
         } catch (SQLException e) {
             throw new DAOException("No se pudo cambiar el estado del pedido #" + idPedido, e);
         }
+    }
+
+    // ------------------------------------------------------------------ modificar (CU07)
+
+    @Override
+    public void modificar(Pedido pedido) {
+        Connection conexion = null;
+        try {
+            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion.setAutoCommit(false);
+
+            bloquearPedidoPendiente(conexion, pedido.getIdPedido(), "modificar");
+
+            // Se compara contra lo que HAY GUARDADO (no contra lo que vio la pantalla): solo se
+            // descuenta o devuelve la diferencia de cada insumo.
+            TreeMap<Integer, BigDecimal> cambios = necesidadDeInsumos(conexion, cantidadesDe(pedido));
+            for (Map.Entry<Integer, BigDecimal> anterior
+                    : necesidadDeInsumos(conexion, cantidadesGuardadas(conexion, pedido.getIdPedido())).entrySet()) {
+                cambios.merge(anterior.getKey(), anterior.getValue().negate(), BigDecimal::add);
+            }
+            ajustarStock(conexion, cambios);
+
+            try (PreparedStatement borrar = conexion.prepareStatement(SQL_BORRAR_DETALLES)) {
+                borrar.setInt(1, pedido.getIdPedido());
+                borrar.executeUpdate();
+            }
+            insertarDetalles(conexion, pedido);
+
+            try (PreparedStatement actualizar = conexion.prepareStatement(SQL_ACTUALIZAR_PEDIDO)) {
+                actualizar.setBigDecimal(1, pedido.calcularTotal());
+                if (pedido.getCliente() == null) {
+                    actualizar.setNull(2, Types.INTEGER);
+                } else {
+                    actualizar.setInt(2, pedido.getCliente().getIdCliente());
+                }
+                actualizar.setInt(3, pedido.getIdPedido());
+                actualizar.executeUpdate();
+            }
+
+            conexion.commit();
+        } catch (NegocioException e) {
+            revertir(conexion);
+            throw e;
+        } catch (SQLException e) {
+            revertir(conexion);
+            throw new DAOException("No se pudo modificar el pedido #" + pedido.getIdPedido(), e);
+        } catch (RuntimeException e) {
+            revertir(conexion);
+            throw e;
+        } finally {
+            cerrar(conexion);
+        }
+    }
+
+    // ------------------------------------------------------------------ cancelar (CU07)
+
+    @Override
+    public void cancelar(int idPedido) {
+        Connection conexion = null;
+        try {
+            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion.setAutoCommit(false);
+
+            // Mismo orden de bloqueos que al registrar: mesa -> pedido -> insumos.
+            Integer idMesa = mesaDelPedido(conexion, idPedido);
+            if (idMesa != null) {
+                liberarMesa(conexion, idMesa);
+            }
+            bloquearPedidoPendiente(conexion, idPedido, "cancelar");
+
+            TreeMap<Integer, BigDecimal> devolucion = new TreeMap<>();
+            for (Map.Entry<Integer, BigDecimal> insumo
+                    : necesidadDeInsumos(conexion, cantidadesGuardadas(conexion, idPedido)).entrySet()) {
+                devolucion.put(insumo.getKey(), insumo.getValue().negate());
+            }
+            ajustarStock(conexion, devolucion);
+
+            // detalle_pedido se borra solo (ON DELETE CASCADE).
+            try (PreparedStatement borrar = conexion.prepareStatement(SQL_BORRAR_PEDIDO)) {
+                borrar.setInt(1, idPedido);
+                borrar.executeUpdate();
+            }
+
+            conexion.commit();
+        } catch (NegocioException e) {
+            revertir(conexion);
+            throw e;
+        } catch (SQLException e) {
+            revertir(conexion);
+            throw new DAOException("No se pudo cancelar el pedido #" + idPedido, e);
+        } catch (RuntimeException e) {
+            revertir(conexion);
+            throw e;
+        } finally {
+            cerrar(conexion);
+        }
+    }
+
+    /** @return el id de la mesa del pedido, o null si es para llevar. */
+    private Integer mesaDelPedido(Connection conexion, int idPedido) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_MESA_DEL_PEDIDO)) {
+            consulta.setInt(1, idPedido);
+            try (ResultSet fila = consulta.executeQuery()) {
+                if (!fila.next()) {
+                    throw pedidoInexistente(idPedido);
+                }
+                int idMesa = fila.getInt("id_mesa");
+                return fila.wasNull() ? null : idMesa;
+            }
+        }
+    }
+
+    private void liberarMesa(Connection conexion, int idMesa) throws SQLException {
+        try (PreparedStatement sentencia = conexion.prepareStatement(SQL_LIBERAR_MESA)) {
+            sentencia.setString(1, EstadoMesa.LIBRE.getDescripcion());
+            sentencia.setInt(2, idMesa);
+            sentencia.setString(3, EstadoMesa.OCUPADA.getDescripcion());
+            sentencia.executeUpdate();
+        }
+    }
+
+    /** Bloquea la fila del pedido y verifica que siga "Pendiente" (la cocina todavía no lo tomó). */
+    private void bloquearPedidoPendiente(Connection conexion, int idPedido, String accion) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_BLOQUEAR_PEDIDO)) {
+            consulta.setInt(1, idPedido);
+            try (ResultSet fila = consulta.executeQuery()) {
+                if (!fila.next()) {
+                    throw pedidoInexistente(idPedido);
+                }
+                EstadoPedido estado = EstadoPedido.desdeDescripcion(fila.getString("estado"));
+                if (estado != EstadoPedido.PENDIENTE) {
+                    throw new NegocioException("No se puede " + accion + " el pedido #" + idPedido
+                            + ": ya está «" + estado.getDescripcion() + "» y la cocina lo tomó.");
+                }
+            }
+        }
+    }
+
+    private Map<Integer, Integer> cantidadesGuardadas(Connection conexion, int idPedido) throws SQLException {
+        Map<Integer, Integer> cantidades = new HashMap<>();
+        try (PreparedStatement consulta = conexion.prepareStatement(SQL_CANTIDADES_DEL_PEDIDO)) {
+            consulta.setInt(1, idPedido);
+            try (ResultSet fila = consulta.executeQuery()) {
+                while (fila.next()) {
+                    cantidades.put(fila.getInt("id_producto"), fila.getInt("cantidad"));
+                }
+            }
+        }
+        return cantidades;
+    }
+
+    private static NegocioException pedidoInexistente(int idPedido) {
+        return new NegocioException("El pedido #" + idPedido + " ya no existe: lo canceló otro usuario.");
     }
 
     // ------------------------------------------------------------------ auxiliares

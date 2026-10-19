@@ -148,7 +148,48 @@ public class SeguimientoController implements Detenible {
             accion.setOnAction(evento -> avanzar(pedido, accion));
             tarjeta.getChildren().add(accion);
         }
+        if (pedidoService.puedeModificar(usuario, pedido.getEstado())) {
+            Button modificar = new Button("Modificar");
+            modificar.getStyleClass().add("boton-claro");
+            modificar.setOnAction(evento -> modificar(pedido, modificar));
+            Button cancelar = new Button("Cancelar pedido");
+            cancelar.getStyleClass().add("boton-peligro");
+            cancelar.setOnAction(evento -> cancelar(pedido, cancelar));
+            HBox acciones = new HBox(8, modificar, cancelar);
+            tarjeta.getChildren().add(acciones);
+        }
         return tarjeta;
+    }
+
+    private void modificar(Pedido pedido, Button boton) {
+        boton.setDisable(true);
+        Tareas.ejecutar(
+                () -> pedidoService.cargarParaModificar(usuario, pedido.getIdPedido()),
+                actualizado -> navegador.mostrarModificarPedido(usuario, actualizado),
+                causa -> {
+                    Dialogos.error(panelPedidos, causa);
+                    cargar();
+                });
+    }
+
+    private void cancelar(Pedido pedido, Button boton) {
+        String destino = pedido.esParaLlevar() ? "para llevar" : "de la mesa " + pedido.getMesa().getNumero();
+        if (!Dialogos.confirmar(panelPedidos, "Cancelar pedido",
+                "Se cancelará el pedido #" + pedido.getIdPedido() + " " + destino
+                        + ".\nSe devuelven los insumos al stock y la mesa queda libre. Esta acción no se puede deshacer.")) {
+            return;
+        }
+        boton.setDisable(true);
+        Tareas.ejecutar(
+                () -> {
+                    pedidoService.cancelarPedido(usuario, pedido);
+                    return Boolean.TRUE;
+                },
+                resultado -> cargar(),
+                causa -> {
+                    Dialogos.error(panelPedidos, causa);
+                    cargar();
+                });
     }
 
     private void avanzar(Pedido pedido, Button boton) {

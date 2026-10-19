@@ -3,8 +3,10 @@ package com.sgeg.modelo;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /** Pedido de una mesa o para llevar. Tabla: pedido (+ detalle_pedido). */
 public class Pedido {
@@ -17,6 +19,12 @@ public class Pedido {
     private String horaCreacion;
     private long minutosEspera;
     private final List<DetallePedido> detalles = new ArrayList<>();
+
+    /**
+     * Cantidades por producto que ya estaban descontadas del stock cuando se cargó el pedido
+     * para modificarlo (vacío en un pedido nuevo). Sirve para controlar solo la diferencia.
+     */
+    private final Map<Integer, Integer> cantidadesOriginales = new HashMap<>();
 
     public Pedido() {
     }
@@ -80,6 +88,23 @@ public class Pedido {
             total = total.add(detalle.getSubtotal());
         }
         return total;
+    }
+
+    /** Guarda las cantidades actuales como "ya descontadas del stock" (se usa al abrir un pedido para modificarlo). */
+    public void recordarCantidadesOriginales() {
+        cantidadesOriginales.clear();
+        for (DetallePedido detalle : detalles) {
+            cantidadesOriginales.merge(detalle.getProducto().getIdProducto(), detalle.getCantidad(), Integer::sum);
+        }
+    }
+
+    public Map<Integer, Integer> getCantidadesOriginales() {
+        return Collections.unmodifiableMap(cantidadesOriginales);
+    }
+
+    /** true si el pedido ya está guardado en la base (tiene id). */
+    public boolean estaRegistrado() {
+        return idPedido != 0;
     }
 
     public boolean estaVacio() {

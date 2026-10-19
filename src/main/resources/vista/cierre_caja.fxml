@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgeg.vista.CierreCajaController" styleClass="principal-raiz">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="barra">
+            <Button text="← Volver" styleClass="boton-secundario" onAction="#volver"/>
+            <Label text="Cierre de caja" styleClass="barra-titulo"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnGuardar" text="Ver resumen para guardar" styleClass="boton-acento" onAction="#guardar"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="24" right="28" bottom="24" left="28"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Día" styleClass="campo-etiqueta"/>
+                <DatePicker fx:id="dpDia"/>
+                <Button fx:id="btnConsultar" text="Consultar" styleClass="boton-primario" onAction="#consultar"/>
+            </HBox>
+
+            <HBox fx:id="avisoSinCobrar" styleClass="aviso-alerta" visible="false" managed="false">
+                <Label fx:id="lblAvisoSinCobrar" wrapText="true"/>
+            </HBox>
+
+            <HBox spacing="14">
+                <VBox styleClass="cifra">
+                    <Label text="Ventas del día" styleClass="cifra-etiqueta"/>
+                    <Label fx:id="lblCantidadVentas" styleClass="cifra-valor"/>
+                </VBox>
+                <VBox styleClass="cifra">
+                    <Label text="Total vendido" styleClass="cifra-etiqueta"/>
+                    <Label fx:id="lblTotalVendido" styleClass="cifra-valor"/>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="24" VBox.vgrow="ALWAYS">
+                <VBox spacing="8" prefWidth="380" HBox.hgrow="NEVER">
+                    <Label text="Cobrado por forma de pago" styleClass="campo-etiqueta"/>
+                    <TableView fx:id="tblFormas" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colForma" text="Forma de pago" prefWidth="150" sortable="false"/>
+                            <TableColumn fx:id="colPagos" text="Pagos" prefWidth="60" sortable="false" styleClass="columna-derecha"/>
+                            <TableColumn fx:id="colTotalForma" text="Total" prefWidth="130" sortable="false" styleClass="columna-derecha"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+                <VBox spacing="8" prefWidth="560" HBox.hgrow="ALWAYS">
+                    <Label text="Ventas del día (doble clic para ver el comprobante)" styleClass="campo-etiqueta"/>
+                    <TableView fx:id="tblVentas" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colComprobante" text="Comprobante" prefWidth="100" sortable="false"/>
+                            <TableColumn fx:id="colFecha" text="Fecha y hora" prefWidth="130" sortable="false"/>
+                            <TableColumn fx:id="colDestino" text="Destino" prefWidth="100" sortable="false"/>
+                            <TableColumn fx:id="colMozo" text="Mozo" prefWidth="130" sortable="false"/>
+                            <TableColumn fx:id="colTotalVenta" text="Total" prefWidth="110" sortable="false" styleClass="columna-derecha"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

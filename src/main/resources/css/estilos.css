@@ -515,3 +515,133 @@
     -fx-background-color: #1E7A46;
     -fx-text-fill: white;
 }
+
+/* ==========================================================
+   Módulos de gestión (cobro, productos, stock, usuarios, reportes)
+   ========================================================== */
+
+.boton-peligro {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-text-fill: -error;
+    -fx-font-weight: bold;
+    -fx-border-color: -error;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.boton-peligro:hover {
+    -fx-background-color: #FDECEA;
+}
+
+.boton-peligro:disabled {
+    -fx-opacity: 0.5;
+}
+
+.text-area {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: -borde;
+    -fx-border-radius: 6;
+}
+
+.text-area .content {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+}
+
+.date-picker {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: -borde;
+    -fx-border-radius: 6;
+}
+
+.check-box {
+    -fx-text-fill: -tinta;
+}
+
+/* Aviso destacado (por ejemplo, insumos bajo el mínimo) */
+.aviso-alerta {
+    -fx-background-color: #FBF0C8;
+    -fx-border-color: #D4A72C;
+    -fx-border-width: 1 1 1 6;
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+    -fx-padding: 10 14 10 14;
+}
+
+.aviso-alerta .label {
+    -fx-text-fill: #5C4300;
+}
+
+.aviso-ok {
+    -fx-background-color: #EAF5EE;
+    -fx-border-color: #1E7A46;
+    -fx-border-width: 1 1 1 6;
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+    -fx-padding: 10 14 10 14;
+}
+
+.aviso-ok .label {
+    -fx-text-fill: #14532D;
+}
+
+/* Tarjetas con una cifra (reportes y cierre de caja) */
+.cifra {
+    -fx-background-color: white;
+    -fx-border-color: -borde;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 12 18 12 18;
+    -fx-min-width: 190px;
+}
+
+.cifra-etiqueta {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tinta-suave;
+}
+
+.cifra-valor {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -berenjena;
+}
+
+/* Comprobante de venta: texto de ancho fijo, como un ticket */
+.comprobante {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 13px;
+}
+
+/* Insignias de stock */
+.stock-ok {
+    -fx-text-fill: #1E7A46;
+    -fx-font-weight: bold;
+}
+
+.stock-bajo {
+    -fx-text-fill: #8A6100;
+    -fx-font-weight: bold;
+}
+
+.stock-agotado {
+    -fx-text-fill: -error;
+    -fx-font-weight: bold;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-radius: 2 2 0 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: white;
+}
+
+.tab-label {
+    -fx-font-weight: bold;
+}

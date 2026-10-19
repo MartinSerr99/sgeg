@@ -1,3 +1,2 @@
 target/
 *.class
-src/main/resources/config.properties

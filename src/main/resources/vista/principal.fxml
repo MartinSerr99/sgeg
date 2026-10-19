@@ -29,6 +29,11 @@
             <padding>
                 <Insets top="32" right="36" bottom="32" left="36"/>
             </padding>
+            <HBox fx:id="avisoStock" alignment="CENTER_LEFT" spacing="14" styleClass="aviso-alerta" visible="false" managed="false">
+                <Label fx:id="lblAvisoStock" wrapText="true"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Ver stock" styleClass="boton-claro" onAction="#verStock"/>
+            </HBox>
             <Label text="Módulos habilitados para tu rol" styleClass="seccion-titulo"/>
             <Label text="Elegí con qué querés trabajar." styleClass="seccion-ayuda"/>
             <FlowPane fx:id="panelModulos" hgap="16" vgap="16">

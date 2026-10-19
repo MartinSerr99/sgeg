@@ -2,7 +2,9 @@
 -- SGEG - Reinicia los datos de PRUEBA para repetir el circuito de pedidos
 -- Borra pedidos, ventas y pagos; vuelve las mesas y el stock a su estado
 -- inicial (los mismos valores de 02_datos_iniciales.sql).
--- NO toca usuarios, clientes, productos ni recetas.
+-- Además reactiva los usuarios y productos (por si se probó desactivarlos).
+-- NO borra usuarios, clientes, productos ni recetas creados desde la aplicación,
+-- ni revierte cambios de precios, mínimos de stock o contraseñas.
 -- Usar solo en desarrollo.
 -- =========================================================
 
@@ -38,6 +40,10 @@ UPDATE insumo SET stock_actual =  30.00 WHERE nombre = 'Papa';
 UPDATE insumo SET stock_actual = 100.00 WHERE nombre = 'Masa para empanada';
 UPDATE insumo SET stock_actual =  40.00 WHERE nombre = 'Gaseosa (botella)';
 UPDATE insumo SET stock_actual =   8.00 WHERE nombre = 'Leche';
+
+-- 4) Usuarios y productos activos / disponibles
+UPDATE usuario  SET activo = TRUE;
+UPDATE producto SET disponible = TRUE;
 
 SET SQL_SAFE_UPDATES = 1;
 

@@ -25,4 +25,23 @@ public interface IPedidoDAO {
      * @throws NegocioException si otro usuario ya lo cambió.
      */
     void cambiarEstado(int idPedido, EstadoPedido estadoActual, EstadoPedido nuevoEstado);
+
+    /** El pedido con su detalle, o null si no existe (se usa para abrirlo y modificarlo, CU07). */
+    Pedido buscarPorId(int idPedido);
+
+    /**
+     * CU07: reemplaza el detalle de un pedido que sigue "Pendiente" y ajusta el stock por la
+     * diferencia (descuenta lo que se agregó, devuelve lo que se quitó), todo en una transacción.
+     *
+     * @throws NegocioException si la cocina ya lo tomó, ya no existe o el stock no alcanza.
+     */
+    void modificar(Pedido pedido);
+
+    /**
+     * CU07: cancela un pedido que sigue "Pendiente": devuelve todo el stock, libera la mesa y
+     * borra el pedido, en una transacción.
+     *
+     * @throws NegocioException si la cocina ya lo tomó o ya no existe.
+     */
+    void cancelar(int idPedido);
 }

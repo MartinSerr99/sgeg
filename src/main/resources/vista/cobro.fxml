@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgeg.vista.CobroController" styleClass="principal-raiz">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="barra">
+            <Button text="← Volver" styleClass="boton-secundario" onAction="#volver"/>
+            <Label text="Cobro y comprobantes" styleClass="barra-titulo"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblActualizado" styleClass="barra-rol"/>
+            <Button fx:id="btnActualizar" text="Actualizar" styleClass="boton-secundario" onAction="#actualizar"/>
+        </HBox>
+    </top>
+
+    <center>
+        <HBox spacing="24">
+            <padding>
+                <Insets top="24" right="28" bottom="24" left="28"/>
+            </padding>
+
+            <VBox spacing="10" HBox.hgrow="ALWAYS" prefWidth="560">
+                <Label text="Pedidos entregados" styleClass="seccion-titulo"/>
+                <Label text="Elegí el pedido que el cliente quiere pagar. La lista se actualiza sola."
+                       styleClass="seccion-ayuda" wrapText="true"/>
+                <TableView fx:id="tblPedidos" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNumero" text="Pedido" prefWidth="80" sortable="false"/>
+                        <TableColumn fx:id="colDestino" text="Destino" prefWidth="110" sortable="false"/>
+                        <TableColumn fx:id="colMozo" text="Mozo" prefWidth="150" sortable="false"/>
+                        <TableColumn fx:id="colHora" text="Hora" prefWidth="70" sortable="false"/>
+                        <TableColumn fx:id="colTotal" text="Total" prefWidth="110" sortable="false" styleClass="columna-derecha"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <VBox spacing="10" HBox.hgrow="ALWAYS" prefWidth="440">
+                <Label fx:id="lblDetalleTitulo" styleClass="seccion-titulo"/>
+                <TableView fx:id="tblDetalle" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colDetalleProducto" text="Producto" prefWidth="210" sortable="false"/>
+                        <TableColumn fx:id="colDetalleCantidad" text="Cant." prefWidth="60" sortable="false" styleClass="columna-derecha"/>
+                        <TableColumn fx:id="colDetalleSubtotal" text="Subtotal" prefWidth="120" sortable="false" styleClass="columna-derecha"/>
+                    </columns>
+                </TableView>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="franja-total">
+                    <Label text="Total a cobrar" styleClass="total-etiqueta"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblTotal" styleClass="total-pedido"/>
+                </HBox>
+                <Button fx:id="btnCobrar" text="Cobrar" styleClass="boton-primario" maxWidth="Infinity" onAction="#cobrar"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

@@ -28,6 +28,7 @@ import javafx.scene.input.MouseButton;
 /**
  * Toma de un pedido (CU06). El mozo arma el pedido con lo que dice el cliente:
  * el stock se controla al agregar cada producto (RF19) y se descuenta al confirmar (RF23).
+ * La misma pantalla sirve para modificar un pedido que sigue pendiente (CU07).
  */
 public class NuevoPedidoController {
 
@@ -69,15 +70,30 @@ public class NuevoPedidoController {
     private Usuario usuario;
     private Pedido pedido;
     private boolean ocupado;
+    private boolean edicion;
 
-    /** Lo invoca el Navegador después de cargar el FXML. */
+    /** Lo invoca el Navegador después de cargar el FXML (pedido nuevo). */
     public void inicializar(Navegador navegador, PedidoService pedidoService, Usuario usuario, Mesa mesa) {
+        this.pedido = pedidoService.iniciarPedido(mesa);
+        this.edicion = false;
+        lblTitulo.setText(mesa == null ? "Nuevo pedido · Para llevar" : "Nuevo pedido · Mesa " + mesa.getNumero());
+        configurar(navegador, pedidoService, usuario);
+    }
+
+    /** Lo invoca el Navegador para modificar un pedido pendiente (CU07). */
+    public void inicializarEdicion(Navegador navegador, PedidoService pedidoService, Usuario usuario, Pedido existente) {
+        this.pedido = existente;
+        this.edicion = true;
+        String destino = existente.esParaLlevar() ? "Para llevar" : "Mesa " + existente.getMesa().getNumero();
+        lblTitulo.setText("Modificar pedido #" + existente.getIdPedido() + " · " + destino);
+        btnConfirmar.setText("Guardar cambios");
+        configurar(navegador, pedidoService, usuario);
+    }
+
+    private void configurar(Navegador navegador, PedidoService pedidoService, Usuario usuario) {
         this.navegador = navegador;
         this.pedidoService = pedidoService;
         this.usuario = usuario;
-        this.pedido = pedidoService.iniciarPedido(mesa);
-
-        lblTitulo.setText(mesa == null ? "Nuevo pedido · Para llevar" : "Nuevo pedido · Mesa " + mesa.getNumero());
 
         configurarMenu();
         configurarPedido();
@@ -138,13 +154,25 @@ public class NuevoPedidoController {
                     mostrarMenu(datos.menu());
                     cmbCliente.getItems().setAll(SIN_CLIENTE);
                     cmbCliente.getItems().addAll(datos.clientes());
-                    cmbCliente.getSelectionModel().select(SIN_CLIENTE);
+                    cmbCliente.getSelectionModel().select(clienteDelPedido(datos.clientes()));
                     establecerOcupado(false);
                 },
                 causa -> {
                     establecerOcupado(false);
                     Dialogos.error(tblMenu, causa);
                 });
+    }
+
+    /** Al modificar un pedido, el combo arranca con el cliente que ya tenía. */
+    private Cliente clienteDelPedido(List<Cliente> clientes) {
+        if (pedido.getCliente() != null) {
+            for (Cliente cliente : clientes) {
+                if (cliente.getIdCliente() == pedido.getCliente().getIdCliente()) {
+                    return cliente;
+                }
+            }
+        }
+        return SIN_CLIENTE;
     }
 
     /** Vuelve a leer el menú (por ejemplo, después de un aviso de stock) conservando el filtro. */
@@ -233,23 +261,34 @@ public class NuevoPedidoController {
         pedido.setCliente(cliente == null || cliente == SIN_CLIENTE ? null : cliente);
 
         String destino = pedido.esParaLlevar() ? "para llevar" : "para la mesa " + pedido.getMesa().getNumero();
-        boolean acepto = Dialogos.confirmar(tblPedido, "Confirmar pedido",
-                "Se enviará a cocina el pedido " + destino + " por " + Formatos.moneda(pedido.calcularTotal())
-                        + ".\nAl confirmar se descuentan los insumos del stock.");
-        if (!acepto) {
+        String pregunta = edicion
+                ? "Se guardarán los cambios del pedido #" + pedido.getIdPedido() + " (" + destino + ") por "
+                        + Formatos.moneda(pedido.calcularTotal()) + ".\nSe ajusta el stock de insumos por la diferencia."
+                : "Se enviará a cocina el pedido " + destino + " por " + Formatos.moneda(pedido.calcularTotal())
+                        + ".\nAl confirmar se descuentan los insumos del stock.";
+        if (!Dialogos.confirmar(tblPedido, edicion ? "Guardar cambios" : "Confirmar pedido", pregunta)) {
             return;
         }
 
         establecerOcupado(true);
         Tareas.ejecutar(
                 () -> {
-                    pedidoService.confirmarPedido(pedido, usuario);
+                    if (edicion) {
+                        pedidoService.modificarPedido(pedido, usuario);
+                    } else {
+                        pedidoService.confirmarPedido(pedido, usuario);
+                    }
                     return pedido.getIdPedido();
                 },
                 numero -> {
-                    Dialogos.informar(tblPedido, "Pedido registrado",
-                            "El pedido #" + numero + " quedó pendiente y ya lo ve la cocina.");
-                    navegador.mostrarMesas(usuario);
+                    if (edicion) {
+                        Dialogos.informar(tblPedido, "Pedido modificado", "El pedido #" + numero + " quedó actualizado.");
+                        navegador.mostrarSeguimiento(usuario);
+                    } else {
+                        Dialogos.informar(tblPedido, "Pedido registrado",
+                                "El pedido #" + numero + " quedó pendiente y ya lo ve la cocina.");
+                        navegador.mostrarMesas(usuario);
+                    }
                 },
                 causa -> {
                     establecerOcupado(false);
@@ -262,6 +301,12 @@ public class NuevoPedidoController {
 
     @FXML
     private void cancelar() {
+        if (edicion) {
+            if (Dialogos.confirmar(tblPedido, "Salir sin guardar", "Se descartarán los cambios hechos a este pedido. ¿Querés salir?")) {
+                navegador.mostrarSeguimiento(usuario);
+            }
+            return;
+        }
         if (!pedido.estaVacio()
                 && !Dialogos.confirmar(tblPedido, "Cancelar pedido", "Se descartarán los productos cargados. ¿Querés salir?")) {
             return;
