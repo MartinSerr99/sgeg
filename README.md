@@ -85,5 +85,4 @@ Controles en MySQL:
 - `com.sgeg.vista`: controladores JavaFX, navegación (Navegador), diálogos y tareas en segundo plano.
 - `src/main/resources/vista`: pantallas FXML. `css/estilos.css`: estilos.
 
-## Subir a GitHub
-No subir la clave de MySQL: `config.properties` contiene la contraseña. Antes de subir, agregar `src/main/resources/config.properties` al `.gitignore` o reemplazar la clave por un valor de ejemplo.
+
