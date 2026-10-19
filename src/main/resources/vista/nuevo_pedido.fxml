@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.sgeg.vista.NuevoPedidoController" styleClass="principal-raiz">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="barra">
+            <Label fx:id="lblTitulo" styleClass="barra-titulo"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnCancelar" text="Cancelar" styleClass="boton-secundario" onAction="#cancelar"/>
+        </HBox>
+    </top>
+
+    <center>
+        <HBox spacing="24">
+            <padding>
+                <Insets top="24" right="28" bottom="24" left="28"/>
+            </padding>
+
+            <!-- Menú -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS" prefWidth="520">
+                <Label text="Menú" styleClass="seccion-titulo"/>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Categoría" styleClass="campo-etiqueta"/>
+                    <ComboBox fx:id="cmbCategoria" prefWidth="220"/>
+                </HBox>
+                <TableView fx:id="tblMenu" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colProducto" text="Producto" prefWidth="210" sortable="false"/>
+                        <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="110" sortable="false"/>
+                        <TableColumn fx:id="colPrecio" text="Precio" prefWidth="90" sortable="false" styleClass="columna-derecha"/>
+                        <TableColumn fx:id="colDisponibles" text="Disponibles" prefWidth="90" sortable="false" styleClass="columna-derecha"/>
+                    </columns>
+                </TableView>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Cantidad" styleClass="campo-etiqueta"/>
+                    <Spinner fx:id="spnCantidad" prefWidth="90"/>
+                    <Button fx:id="btnAgregar" text="Agregar al pedido" styleClass="boton-primario" onAction="#agregar"/>
+                </HBox>
+                <Label text="Tip: también podés agregar con doble clic sobre el producto." styleClass="seccion-ayuda"/>
+            </VBox>
+
+            <!-- Pedido -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS" prefWidth="480">
+                <Label text="Pedido" styleClass="seccion-titulo"/>
+                <TableView fx:id="tblPedido" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colPedidoProducto" text="Producto" prefWidth="200" sortable="false"/>
+                        <TableColumn fx:id="colPedidoCantidad" text="Cant." prefWidth="55" sortable="false" styleClass="columna-derecha"/>
+                        <TableColumn fx:id="colPedidoPrecio" text="P. unit." prefWidth="90" sortable="false" styleClass="columna-derecha"/>
+                        <TableColumn fx:id="colPedidoSubtotal" text="Subtotal" prefWidth="100" sortable="false" styleClass="columna-derecha"/>
+                    </columns>
+                </TableView>
+                <HBox spacing="10">
+                    <Button fx:id="btnQuitarUnidad" text="Quitar una unidad" styleClass="boton-claro" onAction="#quitarUnidad"/>
+                    <Button fx:id="btnQuitarLinea" text="Quitar línea" styleClass="boton-claro" onAction="#quitarLinea"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Cliente" styleClass="campo-etiqueta"/>
+                    <ComboBox fx:id="cmbCliente" prefWidth="260"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="franja-total">
+                    <Label text="Total" styleClass="total-etiqueta"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblTotal" styleClass="total-pedido"/>
+                </HBox>
+                <Button fx:id="btnConfirmar" text="Confirmar pedido" styleClass="boton-primario" maxWidth="Infinity"
+                        onAction="#confirmar"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

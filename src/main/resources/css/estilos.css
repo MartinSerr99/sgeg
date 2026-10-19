@@ -1,0 +1,517 @@
+/* ==========================================================
+   SGEG - estilos
+   Paleta: berenjena (marca), limón (acento sobre fondo oscuro),
+   papel (fondo de trabajo), tinta (texto).
+   Tipografía: Georgia para títulos, Segoe UI para la interfaz.
+   ========================================================== */
+
+.root {
+    -berenjena: #43224A;
+    -berenjena-hover: #5B3265;
+    -limon: #F2C94C;
+    -papel: #F3F4F2;
+    -tinta: #22252B;
+    -tinta-suave: #5E6470;
+    -borde: #C9CDD2;
+    -error: #B42318;
+
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-text-fill: -tinta;
+}
+
+/* ---------- Login ---------- */
+
+.login-raiz {
+    -fx-background-color: white;
+}
+
+.login-marca {
+    -fx-background-color: -berenjena;
+}
+
+.marca-nombre {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 64px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.marca-linea {
+    -fx-background-color: -limon;
+}
+
+.marca-lema {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 18px;
+    -fx-text-fill: #E9DDEC;
+}
+
+.form-titulo {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta;
+}
+
+.form-ayuda {
+    -fx-text-fill: -tinta-suave;
+}
+
+.campo-etiqueta {
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta;
+}
+
+.text-field,
+.password-field {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: -borde;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 9 12 9 12;
+}
+
+.text-field:focused,
+.password-field:focused {
+    -fx-border-color: -berenjena;
+    -fx-border-width: 2;
+    -fx-padding: 8 11 8 11;
+}
+
+.mensaje-error {
+    -fx-text-fill: -error;
+    -fx-font-size: 13px;
+    -fx-padding: 10 0 0 0;
+}
+
+/* ---------- Botones ---------- */
+
+.boton-primario {
+    -fx-background-color: -berenjena;
+    -fx-background-radius: 6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-padding: 8 20 8 20;
+    -fx-cursor: hand;
+}
+
+.boton-primario:hover {
+    -fx-background-color: -berenjena-hover;
+}
+
+.boton-primario:focused {
+    -fx-border-color: -limon;
+}
+
+.boton-primario:disabled {
+    -fx-opacity: 0.55;
+}
+
+.boton-secundario {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-text-fill: white;
+    -fx-border-color: #A98BB0;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: -berenjena-hover;
+    -fx-border-color: white;
+}
+
+.boton-secundario:focused {
+    -fx-border-color: -limon;
+    -fx-border-width: 2;
+    -fx-padding: 6 15 6 15;
+}
+
+/* ---------- Pantalla principal ---------- */
+
+.principal-raiz {
+    -fx-background-color: -papel;
+}
+
+.barra {
+    -fx-background-color: -berenjena;
+    -fx-padding: 14 28 14 28;
+}
+
+.barra-marca {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.barra-usuario {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.barra-rol {
+    -fx-text-fill: -limon;
+    -fx-font-size: 12px;
+}
+
+.seccion-titulo {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta;
+}
+
+.seccion-ayuda {
+    -fx-text-fill: -tinta-suave;
+}
+
+.boton-modulo {
+    -fx-background-color: white;
+    -fx-background-radius: 2;
+    -fx-border-color: -borde;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-padding: 16 18 16 18;
+    -fx-pref-width: 260px;
+    -fx-pref-height: 108px;
+    -fx-cursor: hand;
+}
+
+.boton-modulo:hover {
+    -fx-background-color: -berenjena;
+    -fx-border-color: -berenjena;
+}
+
+.boton-modulo:focused {
+    -fx-border-color: -berenjena;
+    -fx-border-width: 2;
+}
+
+.modulo-titulo {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta;
+}
+
+.modulo-descripcion {
+    -fx-font-size: 13px;
+    -fx-text-fill: -tinta-suave;
+}
+
+.boton-modulo:hover .modulo-titulo {
+    -fx-text-fill: white;
+}
+
+.boton-modulo:hover .modulo-descripcion {
+    -fx-text-fill: #E9DDEC;
+}
+
+/* ==========================================================
+   Módulo de pedidos
+   ========================================================== */
+
+.barra-titulo {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+/* ---------- Botones adicionales ---------- */
+
+.boton-acento {
+    -fx-background-color: -limon;
+    -fx-background-radius: 6;
+    -fx-text-fill: -tinta;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.boton-acento:hover {
+    -fx-background-color: #F7D878;
+}
+
+.boton-acento:focused {
+    -fx-border-color: white;
+}
+
+.boton-claro {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-text-fill: -tinta;
+    -fx-border-color: -borde;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.boton-claro:hover {
+    -fx-border-color: -berenjena;
+}
+
+.boton-claro:disabled {
+    -fx-opacity: 0.5;
+}
+
+/* ---------- Contenedores ---------- */
+
+.scroll-limpio {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-limpio > .viewport {
+    -fx-background-color: transparent;
+}
+
+.area-transparente {
+    -fx-background-color: transparent;
+}
+
+/* ---------- Tablas y selectores ---------- */
+
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 2;
+    -fx-border-color: -borde;
+    -fx-border-radius: 2;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #E9EBE8;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 34px;
+    -fx-border-color: transparent transparent -borde transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -tinta;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-view .column-header.columna-derecha .label {
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.table-view .table-row-cell {
+    -fx-cell-size: 36px;
+    -fx-background-color: white;
+    -fx-table-cell-border-color: #E4E6E3;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #F3ECF5;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: -berenjena;
+}
+
+.table-view .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 10 0 10;
+    -fx-text-fill: -tinta;
+}
+
+.table-view .table-cell.columna-derecha {
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: white;
+}
+
+.combo-box {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: -borde;
+    -fx-border-radius: 6;
+}
+
+.combo-box:focused {
+    -fx-border-color: -berenjena;
+}
+
+.spinner {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+/* ---------- Total del pedido ---------- */
+
+.franja-total {
+    -fx-background-color: white;
+    -fx-border-color: -borde;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 10 16 10 16;
+}
+
+.total-etiqueta {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta-suave;
+}
+
+.total-pedido {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -berenjena;
+}
+
+/* ---------- Mesas ---------- */
+
+.mesa {
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+    -fx-border-width: 2;
+    -fx-pref-width: 150px;
+    -fx-pref-height: 104px;
+    -fx-cursor: hand;
+}
+
+.mesa-numero {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.mesa-estado {
+    -fx-font-size: 13px;
+}
+
+.mesa-libre {
+    -fx-background-color: white;
+    -fx-border-color: #1E7A46;
+}
+
+.mesa-libre .mesa-numero {
+    -fx-text-fill: -tinta;
+}
+
+.mesa-libre .mesa-estado {
+    -fx-text-fill: #1E7A46;
+    -fx-font-weight: bold;
+}
+
+.mesa-libre:hover {
+    -fx-background-color: #EAF5EE;
+}
+
+.mesa-ocupada {
+    -fx-background-color: -berenjena;
+    -fx-border-color: -berenjena;
+}
+
+.mesa-ocupada .mesa-numero {
+    -fx-text-fill: white;
+}
+
+.mesa-ocupada .mesa-estado {
+    -fx-text-fill: #E9DDEC;
+}
+
+.mesa-reservada {
+    -fx-background-color: #FBF0C8;
+    -fx-border-color: #D4A72C;
+}
+
+.mesa-reservada .mesa-numero {
+    -fx-text-fill: -tinta;
+}
+
+.mesa-reservada .mesa-estado {
+    -fx-text-fill: #7A5B00;
+}
+
+/* ---------- Comandas (seguimiento) ---------- */
+
+.comanda {
+    -fx-background-color: white;
+    -fx-background-radius: 2;
+    -fx-border-color: -borde -borde -borde -borde;
+    -fx-border-width: 1 1 1 6;
+    -fx-border-radius: 2;
+    -fx-padding: 14;
+    -fx-pref-width: 270px;
+    -fx-min-width: 270px;
+    -fx-max-width: 270px;
+}
+
+.estado-pendiente-borde {
+    -fx-border-color: -borde -borde -borde #D4A72C;
+}
+
+.estado-en-preparacion-borde {
+    -fx-border-color: -borde -borde -borde #1F5F8B;
+}
+
+.estado-listo-borde {
+    -fx-border-color: -borde -borde -borde #1E7A46;
+}
+
+.comanda-numero {
+    -fx-font-family: "Georgia";
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -tinta;
+}
+
+.comanda-destino {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -berenjena;
+}
+
+.comanda-datos {
+    -fx-font-size: 12px;
+    -fx-text-fill: -tinta-suave;
+}
+
+.comanda-linea {
+    -fx-font-size: 14px;
+    -fx-text-fill: -tinta;
+}
+
+.estado-insignia {
+    -fx-background-radius: 10;
+    -fx-padding: 2 10 2 10;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.estado-pendiente {
+    -fx-background-color: -limon;
+    -fx-text-fill: -tinta;
+}
+
+.estado-en-preparacion {
+    -fx-background-color: #1F5F8B;
+    -fx-text-fill: white;
+}
+
+.estado-listo {
+    -fx-background-color: #1E7A46;
+    -fx-text-fill: white;
+}

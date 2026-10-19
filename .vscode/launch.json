@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Ejecutar SGEG",
+            "request": "launch",
+            "mainClass": "com.sgeg.Launcher"
+        },
+        {
+            "type": "java",
+            "name": "Probar conexión a la BD",
+            "request": "launch",
+            "mainClass": "com.sgeg.PruebaConexion"
+        }
+    ]
+}

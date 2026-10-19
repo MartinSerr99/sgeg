@@ -1,0 +1,5 @@
+# Configuración de conexión a MySQL.
+# Cambiá db.usuario y db.password por los de tu instalación local.
+db.url=jdbc:mysql://localhost:3306/mi_base
+db.username=root
+db.password=CAMBIAR_ESTA_CLAVE
