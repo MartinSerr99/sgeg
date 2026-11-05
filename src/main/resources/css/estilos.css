@@ -1,18 +1,20 @@
 /* ==========================================================
    SGEG - estilos
-   Paleta: berenjena (marca), limón (acento sobre fondo oscuro),
-   papel (fondo de trabajo), tinta (texto).
+   Paleta: grafito azulado (marca), naranja (acento),
+   fondo gris azulado claro, tinta casi negra (texto).
+   Para cambiar los colores de toda la aplicación basta
+   con modificar las variables de la clase .root.
    Tipografía: Georgia para títulos, Segoe UI para la interfaz.
    ========================================================== */
 
 .root {
-    -berenjena: #43224A;
-    -berenjena-hover: #5B3265;
-    -limon: #F2C94C;
-    -papel: #F3F4F2;
-    -tinta: #22252B;
-    -tinta-suave: #5E6470;
-    -borde: #C9CDD2;
+    -grafito: #1F2937;
+    -grafito-hover: #374151;
+    -naranja: #FF8A3D;
+    -papel: #F3F5F8;
+    -tinta: #111827;
+    -tinta-suave: #4B5563;
+    -borde: #D5DBE3;
     -error: #B42318;
 
     -fx-font-family: "Segoe UI";
@@ -27,7 +29,7 @@
 }
 
 .login-marca {
-    -fx-background-color: -berenjena;
+    -fx-background-color: -grafito;
 }
 
 .marca-nombre {
@@ -38,13 +40,13 @@
 }
 
 .marca-linea {
-    -fx-background-color: -limon;
+    -fx-background-color: -naranja;
 }
 
 .marca-lema {
     -fx-font-family: "Georgia";
     -fx-font-size: 18px;
-    -fx-text-fill: #E9DDEC;
+    -fx-text-fill: #CBD5E1;
 }
 
 .form-titulo {
@@ -75,7 +77,7 @@
 
 .text-field:focused,
 .password-field:focused {
-    -fx-border-color: -berenjena;
+    -fx-border-color: -grafito;
     -fx-border-width: 2;
     -fx-padding: 8 11 8 11;
 }
@@ -89,7 +91,7 @@
 /* ---------- Botones ---------- */
 
 .boton-primario {
-    -fx-background-color: -berenjena;
+    -fx-background-color: -grafito;
     -fx-background-radius: 6;
     -fx-text-fill: white;
     -fx-font-weight: bold;
@@ -101,11 +103,11 @@
 }
 
 .boton-primario:hover {
-    -fx-background-color: -berenjena-hover;
+    -fx-background-color: -grafito-hover;
 }
 
 .boton-primario:focused {
-    -fx-border-color: -limon;
+    -fx-border-color: -naranja;
 }
 
 .boton-primario:disabled {
@@ -116,7 +118,7 @@
     -fx-background-color: transparent;
     -fx-background-radius: 6;
     -fx-text-fill: white;
-    -fx-border-color: #A98BB0;
+    -fx-border-color: #94A3B8;
     -fx-border-width: 1;
     -fx-border-radius: 6;
     -fx-padding: 7 16 7 16;
@@ -124,12 +126,12 @@
 }
 
 .boton-secundario:hover {
-    -fx-background-color: -berenjena-hover;
+    -fx-background-color: -grafito-hover;
     -fx-border-color: white;
 }
 
 .boton-secundario:focused {
-    -fx-border-color: -limon;
+    -fx-border-color: -naranja;
     -fx-border-width: 2;
     -fx-padding: 6 15 6 15;
 }
@@ -141,7 +143,7 @@
 }
 
 .barra {
-    -fx-background-color: -berenjena;
+    -fx-background-color: -grafito;
     -fx-padding: 14 28 14 28;
 }
 
@@ -158,7 +160,7 @@
 }
 
 .barra-rol {
-    -fx-text-fill: -limon;
+    -fx-text-fill: -naranja;
     -fx-font-size: 12px;
 }
 
@@ -186,12 +188,12 @@
 }
 
 .boton-modulo:hover {
-    -fx-background-color: -berenjena;
-    -fx-border-color: -berenjena;
+    -fx-background-color: -grafito;
+    -fx-border-color: -grafito;
 }
 
 .boton-modulo:focused {
-    -fx-border-color: -berenjena;
+    -fx-border-color: -grafito;
     -fx-border-width: 2;
 }
 
@@ -211,7 +213,7 @@
 }
 
 .boton-modulo:hover .modulo-descripcion {
-    -fx-text-fill: #E9DDEC;
+    -fx-text-fill: #CBD5E1;
 }
 
 /* ==========================================================
@@ -228,7 +230,7 @@
 /* ---------- Botones adicionales ---------- */
 
 .boton-acento {
-    -fx-background-color: -limon;
+    -fx-background-color: -naranja;
     -fx-background-radius: 6;
     -fx-text-fill: -tinta;
     -fx-font-weight: bold;
@@ -240,7 +242,7 @@
 }
 
 .boton-acento:hover {
-    -fx-background-color: #F7D878;
+    -fx-background-color: #FFA566;
 }
 
 .boton-acento:focused {
@@ -259,7 +261,7 @@
 }
 
 .boton-claro:hover {
-    -fx-border-color: -berenjena;
+    -fx-border-color: -grafito;
 }
 
 .boton-claro:disabled {
@@ -292,7 +294,7 @@
 }
 
 .table-view .column-header-background {
-    -fx-background-color: #E9EBE8;
+    -fx-background-color: #E6EAF0;
 }
 
 .table-view .column-header,
@@ -315,15 +317,15 @@
 .table-view .table-row-cell {
     -fx-cell-size: 36px;
     -fx-background-color: white;
-    -fx-table-cell-border-color: #E4E6E3;
+    -fx-table-cell-border-color: #E2E6EC;
 }
 
 .table-view .table-row-cell:hover {
-    -fx-background-color: #F3ECF5;
+    -fx-background-color: #EEF2F7;
 }
 
 .table-view .table-row-cell:selected {
-    -fx-background-color: -berenjena;
+    -fx-background-color: #FFE7D6;
 }
 
 .table-view .table-cell {
@@ -337,7 +339,8 @@
 }
 
 .table-view .table-row-cell:selected .table-cell {
-    -fx-text-fill: white;
+    -fx-text-fill: -tinta;
+    -fx-font-weight: bold;
 }
 
 .combo-box {
@@ -348,7 +351,7 @@
 }
 
 .combo-box:focused {
-    -fx-border-color: -berenjena;
+    -fx-border-color: -grafito;
 }
 
 .spinner {
@@ -377,7 +380,7 @@
     -fx-font-family: "Georgia";
     -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-text-fill: -berenjena;
+    -fx-text-fill: -grafito;
 }
 
 /* ---------- Mesas ---------- */
@@ -420,8 +423,8 @@
 }
 
 .mesa-ocupada {
-    -fx-background-color: -berenjena;
-    -fx-border-color: -berenjena;
+    -fx-background-color: -grafito;
+    -fx-border-color: -grafito;
 }
 
 .mesa-ocupada .mesa-numero {
@@ -429,7 +432,7 @@
 }
 
 .mesa-ocupada .mesa-estado {
-    -fx-text-fill: #E9DDEC;
+    -fx-text-fill: #CBD5E1;
 }
 
 .mesa-reservada {
@@ -481,7 +484,7 @@
 .comanda-destino {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: -berenjena;
+    -fx-text-fill: -grafito;
 }
 
 .comanda-datos {
@@ -502,7 +505,7 @@
 }
 
 .estado-pendiente {
-    -fx-background-color: -limon;
+    -fx-background-color: #F2C94C;
     -fx-text-fill: -tinta;
 }
 
@@ -609,7 +612,7 @@
     -fx-font-family: "Georgia";
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-text-fill: -berenjena;
+    -fx-text-fill: -grafito;
 }
 
 /* Comprobante de venta: texto de ancho fijo, como un ticket */
