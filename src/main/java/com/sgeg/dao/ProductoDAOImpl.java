@@ -3,7 +3,6 @@ package com.sgeg.dao;
 import com.sgeg.modelo.Categoria;
 import com.sgeg.modelo.IngredienteReceta;
 import com.sgeg.modelo.Producto;
-import com.sgeg.util.ConexionBD;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,12 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class ProductoDAOImpl implements IProductoDAO {
-
-    private static final Logger LOG = Logger.getLogger(ProductoDAOImpl.class.getName());
+public class ProductoDAOImpl extends BaseDAO implements IProductoDAO {
 
     /** Un producto sin receta queda con "unidades" en NULL (no depende de ningún insumo). */
     private static final String SQL_PRODUCTOS =
@@ -74,7 +69,7 @@ public class ProductoDAOImpl implements IProductoDAO {
 
     private List<Producto> leerProductos(String sql, String mensajeError) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(sql);
                  ResultSet resultado = consulta.executeQuery()) {
                 List<Producto> productos = new ArrayList<>();
@@ -84,14 +79,14 @@ public class ProductoDAOImpl implements IProductoDAO {
                 return productos;
             }
         } catch (SQLException e) {
-            throw new DAOException(mensajeError, e);
+            throw fallo(mensajeError, e);
         }
     }
 
     @Override
     public List<IngredienteReceta> obtenerReceta(int idProducto) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_RECETA)) {
                 consulta.setInt(1, idProducto);
                 try (ResultSet resultado = consulta.executeQuery()) {
@@ -108,7 +103,7 @@ public class ProductoDAOImpl implements IProductoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo leer la receta del producto " + idProducto, e);
+            throw fallo("No se pudo leer la receta del producto " + idProducto, e);
         }
     }
 
@@ -118,7 +113,7 @@ public class ProductoDAOImpl implements IProductoDAO {
     public void guardar(Producto producto, List<IngredienteReceta> receta) {
         Connection conexion = null;
         try {
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_INSERTAR, Statement.RETURN_GENERATED_KEYS)) {
@@ -139,7 +134,7 @@ public class ProductoDAOImpl implements IProductoDAO {
             conexion.commit();
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo guardar el producto '" + producto.getNombre() + "'", e);
+            throw fallo("No se pudo guardar el producto '" + producto.getNombre() + "'", e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -152,7 +147,7 @@ public class ProductoDAOImpl implements IProductoDAO {
     public void actualizar(Producto producto, List<IngredienteReceta> receta) {
         Connection conexion = null;
         try {
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_ACTUALIZAR)) {
@@ -172,7 +167,7 @@ public class ProductoDAOImpl implements IProductoDAO {
             conexion.commit();
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo actualizar el producto #" + producto.getIdProducto(), e);
+            throw fallo("No se pudo actualizar el producto #" + producto.getIdProducto(), e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -201,21 +196,21 @@ public class ProductoDAOImpl implements IProductoDAO {
     @Override
     public void cambiarDisponibilidad(int idProducto, boolean disponible) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_DISPONIBILIDAD)) {
                 sentencia.setBoolean(1, disponible);
                 sentencia.setInt(2, idProducto);
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo cambiar la disponibilidad del producto #" + idProducto, e);
+            throw fallo("No se pudo cambiar la disponibilidad del producto #" + idProducto, e);
         }
     }
 
     @Override
     public boolean existeNombre(String nombre, int idExcluido) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_EXISTE_NOMBRE)) {
                 consulta.setString(1, nombre);
                 consulta.setInt(2, idExcluido);
@@ -224,7 +219,7 @@ public class ProductoDAOImpl implements IProductoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo verificar el nombre del producto", e);
+            throw fallo("No se pudo verificar el nombre del producto", e);
         }
     }
 
@@ -246,23 +241,8 @@ public class ProductoDAOImpl implements IProductoDAO {
         return producto;
     }
 
-    private static void revertir(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.rollback();
-            } catch (SQLException e) {
-                LOG.log(Level.SEVERE, "No se pudo revertir la transacción", e);
-            }
-        }
-    }
-
-    private static void cerrar(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.close();
-            } catch (SQLException e) {
-                LOG.log(Level.WARNING, "No se pudo cerrar la conexión de la transacción", e);
-            }
-        }
+    @Override
+    protected String entidad() {
+        return "producto";
     }
 }

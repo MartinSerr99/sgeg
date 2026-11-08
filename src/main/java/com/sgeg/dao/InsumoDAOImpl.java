@@ -2,7 +2,6 @@ package com.sgeg.dao;
 
 import com.sgeg.excepcion.NegocioException;
 import com.sgeg.modelo.Insumo;
-import com.sgeg.util.ConexionBD;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,7 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsumoDAOImpl implements IInsumoDAO {
+public class InsumoDAOImpl extends BaseDAO implements IInsumoDAO {
 
     private static final String SQL_LISTAR =
             "SELECT id_insumo, nombre, stock_actual, stock_minimo, unidad_medida FROM insumo ORDER BY nombre";
@@ -35,7 +34,7 @@ public class InsumoDAOImpl implements IInsumoDAO {
     @Override
     public List<Insumo> listarTodos() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR);
                  ResultSet filas = consulta.executeQuery()) {
                 List<Insumo> insumos = new ArrayList<>();
@@ -47,14 +46,14 @@ public class InsumoDAOImpl implements IInsumoDAO {
                 return insumos;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer los insumos", e);
+            throw fallo("No se pudieron leer los insumos", e);
         }
     }
 
     @Override
     public void guardar(Insumo insumo) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_INSERTAR, Statement.RETURN_GENERATED_KEYS)) {
                 sentencia.setString(1, insumo.getNombre());
                 sentencia.setBigDecimal(2, insumo.getStockActual());
@@ -68,14 +67,14 @@ public class InsumoDAOImpl implements IInsumoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo guardar el insumo '" + insumo.getNombre() + "'", e);
+            throw fallo("No se pudo guardar el insumo '" + insumo.getNombre() + "'", e);
         }
     }
 
     @Override
     public void actualizar(Insumo insumo) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_ACTUALIZAR)) {
                 sentencia.setString(1, insumo.getNombre());
                 sentencia.setBigDecimal(2, insumo.getStockMinimo());
@@ -84,14 +83,14 @@ public class InsumoDAOImpl implements IInsumoDAO {
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo actualizar el insumo #" + insumo.getIdInsumo(), e);
+            throw fallo("No se pudo actualizar el insumo #" + insumo.getIdInsumo(), e);
         }
     }
 
     @Override
     public void sumarStock(int idInsumo, BigDecimal cantidad) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_SUMAR_STOCK)) {
                 sentencia.setBigDecimal(1, cantidad);
                 sentencia.setInt(2, idInsumo);
@@ -100,14 +99,14 @@ public class InsumoDAOImpl implements IInsumoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo registrar el ingreso de stock del insumo #" + idInsumo, e);
+            throw fallo("No se pudo registrar el ingreso de stock del insumo #" + idInsumo, e);
         }
     }
 
     @Override
     public boolean existeNombre(String nombre, int idExcluido) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_EXISTE_NOMBRE)) {
                 consulta.setString(1, nombre);
                 consulta.setInt(2, idExcluido);
@@ -116,20 +115,25 @@ public class InsumoDAOImpl implements IInsumoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo verificar el nombre del insumo", e);
+            throw fallo("No se pudo verificar el nombre del insumo", e);
         }
     }
 
     @Override
     public int contarBajoMinimo() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONTAR_BAJO_MINIMO);
                  ResultSet fila = consulta.executeQuery()) {
                 return fila.next() ? fila.getInt(1) : 0;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo contar los insumos bajo el mínimo", e);
+            throw fallo("No se pudo contar los insumos bajo el mínimo", e);
         }
+    }
+
+    @Override
+    protected String entidad() {
+        return "insumo";
     }
 }

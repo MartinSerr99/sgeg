@@ -8,7 +8,6 @@ import com.sgeg.modelo.FormaPago;
 import com.sgeg.modelo.Pago;
 import com.sgeg.modelo.Producto;
 import com.sgeg.modelo.Venta;
-import com.sgeg.util.ConexionBD;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,12 +16,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class VentaDAOImpl implements IVentaDAO {
-
-    private static final Logger LOG = Logger.getLogger(VentaDAOImpl.class.getName());
+public class VentaDAOImpl extends BaseDAO implements IVentaDAO {
 
     private static final String SQL_FORMAS_DE_PAGO =
             "SELECT id_forma_pago, descripcion FROM forma_pago ORDER BY id_forma_pago";
@@ -78,7 +73,7 @@ public class VentaDAOImpl implements IVentaDAO {
     @Override
     public List<FormaPago> listarFormasDePago() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_FORMAS_DE_PAGO);
                  ResultSet filas = consulta.executeQuery()) {
                 List<FormaPago> formas = new ArrayList<>();
@@ -88,7 +83,7 @@ public class VentaDAOImpl implements IVentaDAO {
                 return formas;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer las formas de pago", e);
+            throw fallo("No se pudieron leer las formas de pago", e);
         }
     }
 
@@ -98,7 +93,7 @@ public class VentaDAOImpl implements IVentaDAO {
     public int registrarCobro(int idPedido, List<Pago> pagos) {
         Connection conexion = null;
         try {
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             // Mismo orden de bloqueos que al registrar o cancelar un pedido: mesa -> pedido.
@@ -128,7 +123,7 @@ public class VentaDAOImpl implements IVentaDAO {
             throw e;
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo registrar el cobro del pedido #" + idPedido, e);
+            throw fallo("No se pudo registrar el cobro del pedido #" + idPedido, e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -220,7 +215,7 @@ public class VentaDAOImpl implements IVentaDAO {
     @Override
     public Venta buscarVenta(int idVenta) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             Venta venta;
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_VENTA)) {
                 consulta.setInt(1, idVenta);
@@ -265,27 +260,12 @@ public class VentaDAOImpl implements IVentaDAO {
             }
             return venta;
         } catch (SQLException e) {
-            throw new DAOException("No se pudo leer la venta #" + idVenta, e);
+            throw fallo("No se pudo leer la venta #" + idVenta, e);
         }
     }
 
-    private static void revertir(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.rollback();
-            } catch (SQLException e) {
-                LOG.log(Level.SEVERE, "No se pudo revertir la transacción", e);
-            }
-        }
-    }
-
-    private static void cerrar(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.close();
-            } catch (SQLException e) {
-                LOG.log(Level.WARNING, "No se pudo cerrar la conexión de la transacción", e);
-            }
-        }
+    @Override
+    protected String entidad() {
+        return "venta y pago";
     }
 }

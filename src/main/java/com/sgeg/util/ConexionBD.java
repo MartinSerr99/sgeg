@@ -29,7 +29,8 @@ public final class ConexionBD {
         try (InputStream in = ConexionBD.class.getResourceAsStream(ARCHIVO_CONFIG)) {
             if (in == null) {
                 throw new IllegalStateException("No se encontró " + ARCHIVO_CONFIG
-                        + " (debe estar en src/main/resources).");
+                        + " (debe estar en src/main/resources). Copiá config.properties.example como "
+                        + "config.properties y completá el usuario y la clave de MySQL.");
             }
             try (Reader lector = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 props.load(lector);

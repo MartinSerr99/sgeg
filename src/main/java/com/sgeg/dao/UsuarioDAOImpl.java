@@ -2,7 +2,6 @@ package com.sgeg.dao;
 
 import com.sgeg.modelo.Rol;
 import com.sgeg.modelo.Usuario;
-import com.sgeg.util.ConexionBD;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +10,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UsuarioDAOImpl implements IUsuarioDAO {
+public class UsuarioDAOImpl extends BaseDAO implements IUsuarioDAO {
 
     private static final String SQL_BUSCAR_POR_NOMBRE_USUARIO =
             "SELECT u.id_usuario, u.nombre, u.nombre_usuario, u.contrasenia_hash, u.activo, "
@@ -47,7 +46,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     @Override
     public Usuario buscarPorNombreUsuario(String nombreUsuario) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_BUSCAR_POR_NOMBRE_USUARIO)) {
                 consulta.setString(1, nombreUsuario);
                 try (ResultSet resultado = consulta.executeQuery()) {
@@ -55,14 +54,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo buscar el usuario '" + nombreUsuario + "'", e);
+            throw fallo("No se pudo buscar el usuario '" + nombreUsuario + "'", e);
         }
     }
 
     @Override
     public void guardar(Usuario usuario) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_INSERTAR, Statement.RETURN_GENERATED_KEYS)) {
                 sentencia.setString(1, usuario.getNombre());
                 sentencia.setString(2, usuario.getNombreUsuario());
@@ -77,14 +76,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo guardar el usuario '" + usuario.getNombreUsuario() + "'", e);
+            throw fallo("No se pudo guardar el usuario '" + usuario.getNombreUsuario() + "'", e);
         }
     }
 
     @Override
     public List<Usuario> listarTodos() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR);
                  ResultSet filas = consulta.executeQuery()) {
                 List<Usuario> usuarios = new ArrayList<>();
@@ -94,14 +93,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 return usuarios;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer los usuarios", e);
+            throw fallo("No se pudieron leer los usuarios", e);
         }
     }
 
     @Override
     public List<Rol> listarRoles() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_ROLES);
                  ResultSet filas = consulta.executeQuery()) {
                 List<Rol> roles = new ArrayList<>();
@@ -111,14 +110,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 return roles;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer los roles", e);
+            throw fallo("No se pudieron leer los roles", e);
         }
     }
 
     @Override
     public void actualizar(Usuario usuario) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_ACTUALIZAR)) {
                 sentencia.setString(1, usuario.getNombre());
                 sentencia.setInt(2, usuario.getRol().getIdRol());
@@ -126,48 +125,48 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo actualizar el usuario #" + usuario.getIdUsuario(), e);
+            throw fallo("No se pudo actualizar el usuario #" + usuario.getIdUsuario(), e);
         }
     }
 
     @Override
     public void cambiarContrasenia(int idUsuario, String nuevoHash) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_CAMBIAR_CONTRASENIA)) {
                 sentencia.setString(1, nuevoHash);
                 sentencia.setInt(2, idUsuario);
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo cambiar la contraseña del usuario #" + idUsuario, e);
+            throw fallo("No se pudo cambiar la contraseña del usuario #" + idUsuario, e);
         }
     }
 
     @Override
     public void cambiarActivo(int idUsuario, boolean activo) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_CAMBIAR_ACTIVO)) {
                 sentencia.setBoolean(1, activo);
                 sentencia.setInt(2, idUsuario);
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo cambiar el estado del usuario #" + idUsuario, e);
+            throw fallo("No se pudo cambiar el estado del usuario #" + idUsuario, e);
         }
     }
 
     @Override
     public int contarAdministradoresActivos() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONTAR_ADMINISTRADORES);
                  ResultSet fila = consulta.executeQuery()) {
                 return fila.next() ? fila.getInt(1) : 0;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron contar los administradores", e);
+            throw fallo("No se pudieron contar los administradores", e);
         }
     }
 
@@ -181,5 +180,10 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         usuario.setActivo(fila.getBoolean("activo"));
         usuario.setRol(rol);
         return usuario;
+    }
+
+    @Override
+    protected String entidad() {
+        return "usuario";
     }
 }

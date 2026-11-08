@@ -2,7 +2,6 @@ package com.sgeg.dao;
 
 import com.sgeg.modelo.EstadoMesa;
 import com.sgeg.modelo.Mesa;
-import com.sgeg.util.ConexionBD;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MesaDAOImpl implements IMesaDAO {
+public class MesaDAOImpl extends BaseDAO implements IMesaDAO {
 
     private static final String SQL_LISTAR =
             "SELECT m.id_mesa, m.numero, em.descripcion AS estado "
@@ -21,7 +20,7 @@ public class MesaDAOImpl implements IMesaDAO {
     @Override
     public List<Mesa> listarTodas() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR);
                  ResultSet resultado = consulta.executeQuery()) {
                 List<Mesa> mesas = new ArrayList<>();
@@ -34,7 +33,12 @@ public class MesaDAOImpl implements IMesaDAO {
                 return mesas;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer las mesas", e);
+            throw fallo("No se pudieron leer las mesas", e);
         }
+    }
+
+    @Override
+    protected String entidad() {
+        return "mesa";
     }
 }

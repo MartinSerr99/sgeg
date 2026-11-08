@@ -3,7 +3,6 @@ package com.sgeg.dao;
 import com.sgeg.modelo.ProductoVendido;
 import com.sgeg.modelo.ResumenVenta;
 import com.sgeg.modelo.TotalFormaPago;
-import com.sgeg.util.ConexionBD;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,7 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReporteDAOImpl implements IReporteDAO {
+public class ReporteDAOImpl extends BaseDAO implements IReporteDAO {
 
     // Las fechas viajan como texto ISO (yyyy-MM-dd): así no influye la zona horaria de la PC.
     // Rango [desde 00:00, hasta + 1 día 00:00): incluye el día "hasta" completo y puede usar índices.
@@ -51,7 +50,7 @@ public class ReporteDAOImpl implements IReporteDAO {
     @Override
     public List<ResumenVenta> ventasDelPeriodo(LocalDate desde, LocalDate hasta) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_VENTAS)) {
                 consulta.setString(1, desde.toString());
                 consulta.setString(2, hasta.toString());
@@ -67,14 +66,14 @@ public class ReporteDAOImpl implements IReporteDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer las ventas del período", e);
+            throw fallo("No se pudieron leer las ventas del período", e);
         }
     }
 
     @Override
     public List<TotalFormaPago> totalesPorFormaDePago(LocalDate desde, LocalDate hasta) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_TOTALES_POR_FORMA)) {
                 consulta.setString(1, desde.toString());
                 consulta.setString(2, hasta.toString());
@@ -88,14 +87,14 @@ public class ReporteDAOImpl implements IReporteDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer los totales por forma de pago", e);
+            throw fallo("No se pudieron leer los totales por forma de pago", e);
         }
     }
 
     @Override
     public List<ProductoVendido> productosMasVendidos(LocalDate desde, LocalDate hasta, int limite) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_PRODUCTOS_MAS_VENDIDOS)) {
                 consulta.setString(1, desde.toString());
                 consulta.setString(2, hasta.toString());
@@ -110,7 +109,12 @@ public class ReporteDAOImpl implements IReporteDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo leer el reporte de productos más vendidos", e);
+            throw fallo("No se pudo leer el reporte de productos más vendidos", e);
         }
+    }
+
+    @Override
+    protected String entidad() {
+        return "reportes";
     }
 }

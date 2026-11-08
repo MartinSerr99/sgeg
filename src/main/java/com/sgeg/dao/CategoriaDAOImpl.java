@@ -1,7 +1,6 @@
 package com.sgeg.dao;
 
 import com.sgeg.modelo.Categoria;
-import com.sgeg.util.ConexionBD;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CategoriaDAOImpl implements ICategoriaDAO {
+public class CategoriaDAOImpl extends BaseDAO implements ICategoriaDAO {
 
     private static final String SQL_LISTAR = "SELECT id_categoria, nombre FROM categoria ORDER BY nombre";
     private static final String SQL_INSERTAR = "INSERT INTO categoria (nombre) VALUES (?)";
@@ -22,7 +21,7 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
     @Override
     public List<Categoria> listarTodas() {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR);
                  ResultSet filas = consulta.executeQuery()) {
                 List<Categoria> categorias = new ArrayList<>();
@@ -32,14 +31,14 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
                 return categorias;
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer las categorías", e);
+            throw fallo("No se pudieron leer las categorías", e);
         }
     }
 
     @Override
     public void guardar(Categoria categoria) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_INSERTAR, Statement.RETURN_GENERATED_KEYS)) {
                 sentencia.setString(1, categoria.getNombre());
                 sentencia.executeUpdate();
@@ -50,28 +49,28 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo guardar la categoría '" + categoria.getNombre() + "'", e);
+            throw fallo("No se pudo guardar la categoría '" + categoria.getNombre() + "'", e);
         }
     }
 
     @Override
     public void renombrar(int idCategoria, String nombre) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_RENOMBRAR)) {
                 sentencia.setString(1, nombre);
                 sentencia.setInt(2, idCategoria);
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo renombrar la categoría #" + idCategoria, e);
+            throw fallo("No se pudo renombrar la categoría #" + idCategoria, e);
         }
     }
 
     @Override
     public int contarProductos(int idCategoria) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_CONTAR_PRODUCTOS)) {
                 consulta.setInt(1, idCategoria);
                 try (ResultSet fila = consulta.executeQuery()) {
@@ -79,27 +78,27 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron contar los productos de la categoría #" + idCategoria, e);
+            throw fallo("No se pudieron contar los productos de la categoría #" + idCategoria, e);
         }
     }
 
     @Override
     public void eliminar(int idCategoria) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_ELIMINAR)) {
                 sentencia.setInt(1, idCategoria);
                 sentencia.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo eliminar la categoría #" + idCategoria, e);
+            throw fallo("No se pudo eliminar la categoría #" + idCategoria, e);
         }
     }
 
     @Override
     public boolean existeNombre(String nombre, int idExcluida) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_EXISTE_NOMBRE)) {
                 consulta.setString(1, nombre);
                 consulta.setInt(2, idExcluida);
@@ -108,7 +107,12 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo verificar el nombre de la categoría", e);
+            throw fallo("No se pudo verificar el nombre de la categoría", e);
         }
+    }
+
+    @Override
+    protected String entidad() {
+        return "categoría";
     }
 }

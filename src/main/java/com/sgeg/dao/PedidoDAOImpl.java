@@ -10,7 +10,6 @@ import com.sgeg.modelo.Mesa;
 import com.sgeg.modelo.Pedido;
 import com.sgeg.modelo.Producto;
 import com.sgeg.modelo.Usuario;
-import com.sgeg.util.ConexionBD;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,12 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class PedidoDAOImpl implements IPedidoDAO {
-
-    private static final Logger LOG = Logger.getLogger(PedidoDAOImpl.class.getName());
+public class PedidoDAOImpl extends BaseDAO implements IPedidoDAO {
 
     // La fecha y hora la pone MySQL (DEFAULT CURRENT_TIMESTAMP): con varias PCs el reloj del servidor es el único común.
     private static final String SQL_INSERTAR_PEDIDO =
@@ -112,7 +107,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
         Connection conexion = null;
         try {
             // Conexión propia: el setAutoCommit(false) no debe afectar a la conexión compartida.
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             // Orden fijo (mesa -> pedido -> insumos por id ascendente) para que dos pedidos
@@ -130,7 +125,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
             throw e;
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo registrar el pedido", e);
+            throw fallo("No se pudo registrar el pedido", e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -261,21 +256,21 @@ public class PedidoDAOImpl implements IPedidoDAO {
             return new ArrayList<>();
         }
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             Map<Integer, Pedido> pedidos = leerPedidos(conexion, estados);
             if (!pedidos.isEmpty()) {
                 leerDetalles(conexion, pedidos);
             }
             return new ArrayList<>(pedidos.values());
         } catch (SQLException e) {
-            throw new DAOException("No se pudieron leer los pedidos", e);
+            throw fallo("No se pudieron leer los pedidos", e);
         }
     }
 
     @Override
     public Pedido buscarPorId(int idPedido) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             Map<Integer, Pedido> pedidos = new LinkedHashMap<>();
             try (PreparedStatement consulta = conexion.prepareStatement(SQL_LISTAR_PEDIDOS + "WHERE p.id_pedido = ?")) {
                 consulta.setInt(1, idPedido);
@@ -292,7 +287,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
             leerDetalles(conexion, pedidos);
             return pedidos.get(idPedido);
         } catch (SQLException e) {
-            throw new DAOException("No se pudo leer el pedido #" + idPedido, e);
+            throw fallo("No se pudo leer el pedido #" + idPedido, e);
         }
     }
 
@@ -363,7 +358,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
     @Override
     public void cambiarEstado(int idPedido, EstadoPedido estadoActual, EstadoPedido nuevoEstado) {
         try {
-            Connection conexion = ConexionBD.getInstancia().getConexion();
+            Connection conexion = conexionCompartida();
             try (PreparedStatement sentencia = conexion.prepareStatement(SQL_CAMBIAR_ESTADO)) {
                 sentencia.setString(1, nuevoEstado.getDescripcion());
                 sentencia.setInt(2, idPedido);
@@ -374,7 +369,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("No se pudo cambiar el estado del pedido #" + idPedido, e);
+            throw fallo("No se pudo cambiar el estado del pedido #" + idPedido, e);
         }
     }
 
@@ -384,7 +379,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
     public void modificar(Pedido pedido) {
         Connection conexion = null;
         try {
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             bloquearPedidoPendiente(conexion, pedido.getIdPedido(), "modificar");
@@ -421,7 +416,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
             throw e;
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo modificar el pedido #" + pedido.getIdPedido(), e);
+            throw fallo("No se pudo modificar el pedido #" + pedido.getIdPedido(), e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -436,7 +431,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
     public void cancelar(int idPedido) {
         Connection conexion = null;
         try {
-            conexion = ConexionBD.getInstancia().abrirConexionNueva();
+            conexion = conexionPropia();
             conexion.setAutoCommit(false);
 
             // Mismo orden de bloqueos que al registrar: mesa -> pedido -> insumos.
@@ -465,7 +460,7 @@ public class PedidoDAOImpl implements IPedidoDAO {
             throw e;
         } catch (SQLException e) {
             revertir(conexion);
-            throw new DAOException("No se pudo cancelar el pedido #" + idPedido, e);
+            throw fallo("No se pudo cancelar el pedido #" + idPedido, e);
         } catch (RuntimeException e) {
             revertir(conexion);
             throw e;
@@ -537,23 +532,8 @@ public class PedidoDAOImpl implements IPedidoDAO {
         return String.join(", ", Collections.nCopies(cantidad, "?"));
     }
 
-    private static void revertir(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.rollback();
-            } catch (SQLException e) {
-                LOG.log(Level.SEVERE, "No se pudo revertir la transacción", e);
-            }
-        }
-    }
-
-    private static void cerrar(Connection conexion) {
-        if (conexion != null) {
-            try {
-                conexion.close();
-            } catch (SQLException e) {
-                LOG.log(Level.WARNING, "No se pudo cerrar la conexión de la transacción", e);
-            }
-        }
+    @Override
+    protected String entidad() {
+        return "pedido";
     }
 }

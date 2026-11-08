@@ -28,7 +28,7 @@ Decisiones de diseño:
 2. En MySQL ejecutar, en este orden: `database/01_schema.sql` y `database/02_datos_iniciales.sql`.
    (Si ya existía una base `sgeg`, borrarla antes con `DROP DATABASE sgeg;`).
    Para repetir las pruebas sin recrear la base: `database/99_reiniciar_datos_de_prueba.sql`.
-3. Editar `src/main/resources/config.properties` con el usuario y la clave de MySQL.
+3. Copiar `src/main/resources/config.properties.example` como `src/main/resources/config.properties` (ese archivo no se sube al repositorio) y completar el usuario y la clave de MySQL.
 4. VS Code: Run and Debug → "Probar conexión a la BD" (debe mostrar varios [OK]).
 5. VS Code: Run and Debug → "Ejecutar SGEG".
    Alternativa por terminal (requiere Maven): `mvn javafx:run`
@@ -79,10 +79,11 @@ Controles en MySQL:
 ## Estructura
 - `com.sgeg.modelo`: entidades (Usuario, Mesa, Producto, Pedido, DetallePedido, Venta, Pago, Insumo…).
 - `com.sgeg.util`: ConexionBD (Singleton; `abrirConexionNueva()` para transacciones), SeguridadUtil (PBKDF2), Formatos, Comprobantes.
-- `com.sgeg.dao`: interfaces DAO y su implementación JDBC.
+- `com.sgeg.dao`: interfaces DAO (contrato), `BaseDAO` (clase abstracta con la conexión, el rollback y la conversión de `SQLException` en `DAOException`) y las implementaciones JDBC que heredan de ella.
 - `com.sgeg.servicio`: reglas de negocio (SesionService, PedidoService, VentaService, ReporteService, ProductoService, InsumoService, UsuarioService) y `Servicios` que los agrupa.
 - `com.sgeg.excepcion`: NegocioException (mensaje para el usuario) y StockInsuficienteException.
 - `com.sgeg.vista`: controladores JavaFX, navegación (Navegador), diálogos y tareas en segundo plano.
 - `src/main/resources/vista`: pantallas FXML. `css/estilos.css`: estilos.
 
-
+## Prueba unitaria de la capa DAO
+`src/test/java/com/sgeg/dao/PruebaBaseDAO.java` prueba `BaseDAO` y los DAO que heredan de ella **sin usar MySQL**: registra un driver JDBC simulado (`jdbc:fake:`, configurado en `src/test/resources/config.properties`) y provoca fallas para comprobar que se hace rollback, que se cierra la conexión y que el error sale como `DAOException`. Se ejecuta con el `main` de esa clase (con las clases de prueba en el classpath) y debe terminar con `Resultado: 13 OK, 0 con falla`. Para probar contra MySQL real se usa `PruebaConexion` y la guía de pruebas de arriba.
